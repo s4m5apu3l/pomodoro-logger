@@ -1,0 +1,9 @@
+{
+  "id": "pomodoro-logger",
+  "name": "Pomodoro Logger",
+  "version": "1.0.0",
+  "minAppVersion": "0.15.0",
+  "description": "A simple Pomodoro timer that logs completed sessions to a markdown file.",
+  "author": "Pomodoro Logger",
+  "isDesktopOnly": false
+}
