@@ -1,0 +1,8 @@
+{
+  "settings": {
+    "workDuration": 15,
+    "breakDuration": 5,
+    "soundEnabled": true,
+    "logFilePath": "pomodoro-log.md"
+  }
+}
