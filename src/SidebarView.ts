@@ -283,7 +283,7 @@ export class SidebarView extends ItemView {
     this.timerDisplay.setText(timeString);
   }
 
-  private updateProgress(remaining: number, total: number): void {
+  updateProgress(remaining: number, total: number): void {
     if (!this.progressRing) return;
     
     const circumference = 2 * Math.PI * 90;
@@ -292,7 +292,7 @@ export class SidebarView extends ItemView {
     this.progressRing.style.strokeDashoffset = offset.toString();
   }
 
-  private updateSessionUI(sessionType: 'work' | 'break', taskName: string): void {
+  updateSessionUI(sessionType: 'work' | 'break', taskName: string): void {
     if (!this.sessionBadge || !this.timerContainer || !this.timerTask) return;
     
     if (sessionType === 'break') {

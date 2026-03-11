@@ -283,38 +283,23 @@ export default class PomodoroPlugin extends Plugin {
           return;
         }
 
-        const state = persistedState.state;
-        
-        const incompleteSession: SessionData = {
-          date: new Date().toISOString().split('T')[0],
-          startTime: state.startTime 
-            ? new Date(state.startTime).toTimeString().split(' ')[0]
-            : "00:00:00",
-          duration: Math.floor(state.totalSeconds / 60),
-          taskName: state.taskName,
-          status: "incomplete",
-        };
-
-        console.log("Logging incomplete session:", incompleteSession);
-
-        if (this.logManager) {
-          const result = await this.logManager.appendSession(incompleteSession);
-          if (!result.ok) {
-            console.error("Failed to log incomplete session:", result.error);
-            new Notice(`⚠️ Failed to log incomplete session: ${result.error.message}`, 8000);
-          } else {
-            new Notice(`📝 Session "${state.taskName}" logged as incomplete`, 5000);
+        // Restore the timer state and resume it
+        if (this.timerManager) {
+          this.timerManager.loadPersistedState(persistedState.state);
+          
+          const state = this.timerManager.getState();
+          
+          // Update UI
+          if (this.sidebarView) {
+            this.sidebarView.updateTimerDisplay(state.remainingSeconds, state.totalSeconds);
+            this.sidebarView.updateProgress(state.remainingSeconds, state.totalSeconds);
+            this.sidebarView.updateControlButtons(state);
+            this.sidebarView.updateSessionUI(state.sessionType, state.taskName);
           }
+          
+          new Notice(`🔄 Timer restored: ${state.taskName}`, 5000);
+          console.log("Timer restored:", state.taskName);
         }
-
-        if (this.notificationManager) {
-          this.notificationManager.notifyIncompleteSession(
-            state.taskName,
-            state.remainingSeconds
-          );
-        }
-
-        await this.clearTimerState();
       }
     } catch (error) {
       console.error("Failed to check incomplete session", error);

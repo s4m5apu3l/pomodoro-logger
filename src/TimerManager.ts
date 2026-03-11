@@ -58,6 +58,12 @@ export class TimerManager {
     // Start interval for UI updates
     this.startInterval();
     
+    // Immediately save state for persistence
+    if (this.saveStateCallback) {
+      const serializable = this.getSerializableState();
+      this.saveStateCallback(serializable as TimerState);
+    }
+    
     return { ok: true, value: undefined };
   }
 
