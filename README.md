@@ -6,12 +6,11 @@ A beautiful Pomodoro timer plugin with session logging, statistics, and notifica
 
 ## Features
 
-- 🎯 Beautiful sidebar timer with progress ring
+- 📊 Statistics - today, this week, this month
+- 📋 Session log in Markdown table format
 - ⏯️ Start/Pause/Resume/Stop controls
 - 📝 Task name input with validation
 - ⚙️ Configurable work (1-120 min) and break (1-60 min) durations
-- 📊 Statistics - today, this week, this month
-- 📋 Session log in Markdown table format
 - 🔔 Visual notifications and optional sound alerts
 - 💾 Auto-save timer state - resumes after app restart
 
@@ -38,7 +37,7 @@ A beautiful Pomodoro timer plugin with session logging, statistics, and notifica
 
 ## Session Log
 
-Sessions are saved to `pomodoro-sessions.md` in your vault root:
+Sessions are saved to `pomodoro-log.md` in your vault root:
 
 | Date | Start Time | Duration (min) | Task | Status |
 |------|------------|----------------|------|--------|
