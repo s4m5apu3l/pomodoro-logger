@@ -45,22 +45,6 @@ Sessions are saved to `pomodoro-sessions.md` in your vault root:
 | 2024-01-15 | 09:00:00 | 25 | Writing | completed |
 | 2024-01-15 | 09:30:00 | 5 | Break | completed |
 
-## Development
-
-```bash
-# Install dependencies
-npm install
-
-# Development mode
-npm run dev
-
-# Build for production
-npm run build
-
-# Run tests
-npm test
-```
-
 ## License
 
 MIT
