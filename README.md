@@ -1,73 +1,65 @@
-# Enhanced Pomodoro Timer for Obsidian
+# Pomodoro Logger for Obsidian
 
-Improved Pomodoro timer plugin with sidebar UI, session logging, statistics, and notifications.
+A beautiful Pomodoro timer plugin with session logging, statistics, and notifications. Track your focus sessions and analyze productivity.
+
+![Pomodoro Logger](pomodor-screen.png)
 
 ## Features
 
-- 🎯 Sidebar panel with timer controls
-- ⏯️ Start/Pause/Resume functionality
+- 🎯 Beautiful sidebar timer with progress ring
+- ⏯️ Start/Pause/Resume/Stop controls
 - 📝 Task name input with validation
-- ⚙️ Configurable work/break durations
-- 📊 Statistics (today/week/month)
+- ⚙️ Configurable work (1-120 min) and break (1-60 min) durations
+- 📊 Statistics - today, this week, this month
 - 📋 Session log in Markdown table format
-- 🔔 Visual and sound notifications
-- 💾 Incomplete session recovery
+- 🔔 Visual notifications and optional sound alerts
+- 💾 Auto-save timer state - resumes after app restart
 
-## Development Setup
+## Installation
 
-1. **Install dependencies:**
-   ```bash
-   npm install
-   ```
+### From Obsidian (recommended)
+1. Open **Settings** → **Community plugins**
+2. Disable Safe mode
+3. Search for "Pomodoro Logger"
+4. Install and enable
 
-2. **Development mode** (auto-rebuild on changes):
-   ```bash
-   npm run dev
-   ```
+### Manual
+1. Clone this repo
+2. Run `npm install && npm run build`
+3. Copy `main.js`, `manifest.json`, and `styles.css` to your vault's `.obsidian/plugins/obsidian-pomodoro-logger/` folder
 
-3. **Build for production:**
-   ```bash
-   npm run build
-   ```
+## Usage
 
-4. **Run tests:**
-   ```bash
-   npm test
-   ```
+1. Click the timer icon in the sidebar or run "Open Pomodoro Timer" command
+2. Enter a task name
+3. Click **start** to begin focusing
+4. Take breaks when the timer completes
+5. View your statistics and session history
 
-5. **Run tests in watch mode:**
-   ```bash
-   npm run test:watch
-   ```
+## Session Log
 
-## Project Structure
+Sessions are saved to `pomodoro-sessions.md` in your vault root:
 
+| Date | Start Time | Duration (min) | Task | Status |
+|------|------------|----------------|------|--------|
+| 2024-01-15 | 09:00:00 | 25 | Writing | completed |
+| 2024-01-15 | 09:30:00 | 5 | Break | completed |
+
+## Development
+
+```bash
+# Install dependencies
+npm install
+
+# Development mode
+npm run dev
+
+# Build for production
+npm run build
+
+# Run tests
+npm test
 ```
-src/
-├── main.ts                 # Plugin entry point
-├── TimerManager.ts         # Timer logic with Date-based accuracy
-├── LogManager.ts           # Session logging to Markdown
-├── LogParser.ts            # Parse Markdown table
-├── StatisticsCalculator.ts # Calculate statistics
-├── NotificationManager.ts  # Handle notifications
-├── SidebarView.ts          # UI components
-└── types.ts                # TypeScript interfaces
-```
-
-## Testing
-
-The project uses a dual testing approach:
-- **Unit tests**: Specific examples and edge cases
-- **Property-based tests**: Universal properties with fast-check (100+ iterations)
-
-Coverage target: ≥80%
-
-## Spec-Driven Development
-
-This plugin follows the spec-driven development workflow. See `.kiro/specs/enhanced-pomodoro-timer/` for:
-- `requirements.md` - User stories and acceptance criteria
-- `design.md` - Architecture and correctness properties
-- `tasks.md` - Implementation plan
 
 ## License
 
