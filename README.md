@@ -38,7 +38,7 @@ A beautiful Pomodoro timer plugin with session logging, statistics, and notifica
 
 ## Session Log
 
-Sessions are saved to `pomodoro-sessions.md` in your vault root:
+Sessions are saved to `pomodoro-log.md` in your vault root:
 
 | Date | Start Time | Duration (min) | Task | Status |
 |------|------------|----------------|------|--------|
