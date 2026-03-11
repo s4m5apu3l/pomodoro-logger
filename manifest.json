@@ -5,8 +5,8 @@
 	"minAppVersion": "0.15.0",
 	"description": "A beautiful Pomodoro timer with session logging, statistics, and notifications. Track your focus sessions and analyze productivity.",
 	"author": "oroku saki",
-	"authorUrl": "https://github.com/orokusaki",
+	"authorUrl": "https://github.com/s4m5apu3l",
 	"isDesktopOnly": false,
-	"fundingUrl": "https://github.com/orokusaki/obsidian-pomodoro-timer",
+	"fundingUrl": "https://github.com/s4m5apu3l/pomodoro-logger",
 	"css": "styles.css"
 }
