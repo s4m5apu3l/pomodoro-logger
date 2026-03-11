@@ -2,7 +2,7 @@
 
 A beautiful Pomodoro timer plugin with session logging, statistics, and notifications. Track your focus sessions and analyze productivity.
 
-![Pomodoro Logger](pomodor-screen.png)
+![Pomodoro Logger](pomodoro-screen.png)
 
 ## Features
 
