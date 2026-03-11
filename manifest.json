@@ -1,12 +1,12 @@
 {
-	"id": "pomodoro-logger",
-	"name": "Pomodoro-logger",
+	"id": "obsidian-pomodoro-logger",
+	"name": "Pomodoro Logger",
 	"version": "2.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "A beautiful Pomodoro timer with session logging, statistics, and notifications. Track your focus sessions and analyze productivity.",
-	"author": "oroku saki",
+	"author": "s4m5apu3l",
 	"authorUrl": "https://github.com/s4m5apu3l",
 	"isDesktopOnly": false,
-	"fundingUrl": "https://github.com/s4m5apu3l/pomodoro-logger",
+	"fundingUrl": "https://github.com/s4m5apu3l/obsidian-pomodoro-logger",
 	"css": "styles.css"
 }
