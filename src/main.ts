@@ -350,11 +350,13 @@ export default class PomodoroPlugin extends Plugin {
   private async saveTimerState(state: TimerState): Promise<void> {
     try {
       const data = await this.loadData();
+      const startTimeStr = state.startTime
+        ? (typeof state.startTime === "string" ? state.startTime : state.startTime.toISOString())
+        : null;
       const persistedState: PersistedTimerState = {
         state: {
           ...state,
-          // Convert Date to ISO string for serialization
-          startTime: state.startTime ? state.startTime.toISOString() : null,
+          startTime: startTimeStr,
         },
         timestamp: Date.now(),
       };
