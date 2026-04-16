@@ -49,7 +49,8 @@ export class StatisticsCalculator {
     endDate: Date
   ): SessionData[] {
     return sessions.filter((session) => {
-      const sessionDate = new Date(session.date);
+      const [year, month, day] = session.date.split('-').map(Number);
+      const sessionDate = new Date(year, month - 1, day);
       return sessionDate >= startDate && sessionDate <= endDate;
     });
   }

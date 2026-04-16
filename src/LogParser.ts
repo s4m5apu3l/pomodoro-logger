@@ -97,7 +97,8 @@ export class LogParser {
     }
 
     // Must have at least 5 columns (6 pipes)
-    const pipeCount = (row.match(/\|/g) || []).length;
+    const unescapedPipes = row.replace(/\\\|/g, '  ').match(/\|/g);
+    const pipeCount = unescapedPipes ? unescapedPipes.length : 0;
     if (pipeCount < 6) {
       return false;
     }

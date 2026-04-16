@@ -142,8 +142,8 @@ describe("StatisticsCalculator", () => {
 				},
 			];
 
-			const startDate = new Date("2024-01-15");
-			const endDate = new Date("2024-01-16");
+		const startDate = new Date(2024, 0, 15);
+		const endDate = new Date(2024, 0, 16, 23, 59, 59);
 
 			const filtered = StatisticsCalculator.filterByDate(
 				sessions,
@@ -167,8 +167,8 @@ describe("StatisticsCalculator", () => {
 				},
 			];
 
-			const startDate = new Date("2024-01-15");
-			const endDate = new Date("2024-01-15");
+		const startDate = new Date(2024, 0, 15);
+		const endDate = new Date(2024, 0, 15, 23, 59, 59);
 
 			const filtered = StatisticsCalculator.filterByDate(
 				sessions,

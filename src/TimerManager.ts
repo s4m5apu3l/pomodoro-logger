@@ -81,7 +81,10 @@ export class TimerManager {
 
     this.state.isPaused = true;
     this.stopInterval();
-    this.saveState();
+    if (this.saveStateCallback) {
+      const serializable = this.getSerializableState();
+      this.saveStateCallback(serializable as TimerState);
+    }
   }
 
   // Resume timer
@@ -105,14 +108,27 @@ export class TimerManager {
     this.startInterval();
   }
 
-  // Stop timer
-  stop(): void {
+  // Stop timer — logs incomplete session via completeCallbacks
+  stop(): SessionData | null {
     if (!this.state.isRunning) {
       console.warn("Cannot stop: timer is not running");
-      return;
+      return null;
     }
 
     this.stopInterval();
+
+    const elapsedSeconds = this.state.totalSeconds - this.state.remainingSeconds;
+    const sessionData: SessionData = {
+      date: new Date().toISOString().split('T')[0],
+      startTime: this.state.startTime 
+        ? this.state.startTime.toTimeString().split(' ')[0]
+        : "00:00:00",
+      duration: Math.max(1, Math.floor(elapsedSeconds / 60)),
+      taskName: this.state.taskName,
+      status: "incomplete",
+      sessionType: this.state.sessionType,
+    };
+
     this.state = {
       isRunning: false,
       isPaused: false,
@@ -122,6 +138,10 @@ export class TimerManager {
       startTime: null,
       sessionType: "work",
     };
+
+    this.completeCallbacks.forEach(cb => cb(sessionData));
+
+    return sessionData;
   }
 
   // Force stop interval (for unload)
@@ -129,6 +149,13 @@ export class TimerManager {
     if (this.intervalId !== null) {
       clearInterval(this.intervalId);
       this.intervalId = null;
+    }
+  }
+
+  // Start interval for a restored timer (after loadPersistedState)
+  resumeInterval(): void {
+    if (this.state.isRunning && !this.state.isPaused) {
+      this.startInterval();
     }
   }
 
@@ -186,19 +213,7 @@ export class TimerManager {
     };
   }
 
-  // Save state (for persistence)
-  saveState(): void {
-    // This will be implemented when integrating with Plugin
-    // For now, just a placeholder
-  }
-
-  // Load state (for persistence)
-  loadState(): TimerState | null {
-    // This will be implemented when integrating with Plugin
-    return null;
-  }
-
-  // Private: Start interval
+  // Private: Handle completion
   private startInterval(): void {
     let tickCount = 0;
     this.intervalId = window.setInterval(() => {
@@ -239,6 +254,7 @@ export class TimerManager {
       duration: Math.floor(this.state.totalSeconds / 60),
       taskName: this.state.taskName,
       status: "completed",
+      sessionType: this.state.sessionType,
     };
 
     // Reset state

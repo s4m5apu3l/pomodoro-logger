@@ -153,7 +153,7 @@ describe("PomodoroPlugin", () => {
 			);
 		});
 
-		test("should check for incomplete session on load", async () => {
+		test("should restore non-stale incomplete session on load", async () => {
 			const incompleteState = {
 				state: {
 					isRunning: true,
@@ -170,9 +170,8 @@ describe("PomodoroPlugin", () => {
 			await plugin.saveData({ timerState: incompleteState });
 			await plugin.onload();
 
-			// Should have cleared the timer state
-			const data = await plugin.loadData();
-			expect(data.timerState).toBeUndefined();
+			// Should have restored the timer (not cleared it)
+			expect(plugin.timerManager?.getState().taskName).toBe("Test Task");
 		});
 
 		test("should save timer state on unload if running", async () => {
@@ -208,7 +207,7 @@ describe("PomodoroPlugin", () => {
 	});
 
 	describe("Incomplete Session Recovery", () => {
-		test("should log incomplete session if closed within 24 hours", async () => {
+		test("should restore timer if closed within 24 hours", async () => {
 			const incompleteState = {
 				state: {
 					isRunning: true,
@@ -224,15 +223,13 @@ describe("PomodoroPlugin", () => {
 
 			await plugin.saveData({ timerState: incompleteState });
 
-			const writeSpy = jest.spyOn((plugin as any).app.vault.adapter, "write");
-
 			await plugin.onload();
 
-			// Should have written to log file
-			expect(writeSpy).toHaveBeenCalled();
+			// Should have restored the timer
+			expect(plugin.timerManager?.getState().taskName).toBe("Incomplete Task");
 		});
 
-		test("should ignore stale timer state older than 24 hours", async () => {
+		test("should log and clear stale timer state older than 24 hours", async () => {
 			const staleState = {
 				state: {
 					isRunning: true,
@@ -252,8 +249,10 @@ describe("PomodoroPlugin", () => {
 
 			await plugin.onload();
 
-			// Should NOT have written to log file (no incomplete session logged)
-			// The state should just be cleared
+			// Should have logged the stale session as incomplete
+			expect(writeSpy).toHaveBeenCalled();
+
+			// The state should be cleared
 			const data = await plugin.loadData();
 			expect(data.timerState).toBeUndefined();
 		});
@@ -280,7 +279,7 @@ describe("PomodoroPlugin", () => {
 			expect(plugin.notificationManager).toBeTruthy();
 		});
 
-		test("should clear timer state after recovery", async () => {
+		test("should restore timer state after recovery", async () => {
 			const incompleteState = {
 				state: {
 					isRunning: true,
@@ -297,8 +296,8 @@ describe("PomodoroPlugin", () => {
 			await plugin.saveData({ timerState: incompleteState });
 			await plugin.onload();
 
-			const data = await plugin.loadData();
-			expect(data.timerState).toBeUndefined();
+			// Timer should be restored (state persists until timer completes/stops)
+			expect(plugin.timerManager?.getState().taskName).toBe("Clear Task");
 		});
 	});
 

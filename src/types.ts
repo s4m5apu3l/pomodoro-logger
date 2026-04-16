@@ -16,6 +16,7 @@ export interface SessionData {
   duration: number;      // in minutes
   taskName: string;
   status: 'completed' | 'incomplete';
+  sessionType?: 'work' | 'break';
 }
 
 export interface PomodoroSettings {

@@ -35,6 +35,7 @@ export default class PomodoroPlugin extends Plugin {
   logManager: LogManager | null = null;
   notificationManager: NotificationManager | null = null;
   sidebarView: SidebarView | null = null;
+  private _pendingSession: SessionData | null = null;
 
   async onload() {
     console.log("Loading Enhanced Pomodoro Timer plugin");
@@ -107,6 +108,16 @@ export default class PomodoroPlugin extends Plugin {
           console.log("Timer state saved on unload:", state.taskName);
         } catch (e) {
           console.error("Failed to save timer state on unload:", e);
+        }
+      }
+
+      if (this._pendingSession) {
+        try {
+          const data = await this.loadData();
+          data.pendingSession = this._pendingSession;
+          await this.saveData(data);
+        } catch (e) {
+          console.error("Failed to save pending session on unload:", e);
         }
       }
     }
@@ -194,23 +205,25 @@ export default class PomodoroPlugin extends Plugin {
 
   // Event handler: Timer complete
   private async onTimerComplete(sessionData: SessionData): Promise<void> {
+    this._pendingSession = sessionData;
+
     try {
-      // Log the completed session
       if (this.logManager) {
         const result = await this.logManager.appendSession(sessionData);
         if (!result.ok) {
           console.error("Failed to log session:", result.error);
           new Notice("⚠️ Failed to save session to log. Session data may be lost.", 8000);
-          // Continue execution - don't let log failure stop notifications
         }
       }
 
-      // Show completion notification
-      if (this.notificationManager) {
-        this.notificationManager.notifyTimerCompleted(sessionData.status === "completed" ? "work" : "break");
+      const sessionType = sessionData.sessionType ?? 'work';
+
+      if (sessionData.status === "completed") {
+        this.notificationManager?.notifyTimerCompleted(sessionType);
+      } else {
+        this.notificationManager?.notifyTimerStopped(sessionType);
       }
 
-      // Refresh statistics in sidebar
       if (this.sidebarView) {
         try {
           const sessions = await this.logManager?.readAllSessions() || [];
@@ -222,18 +235,17 @@ export default class PomodoroPlugin extends Plugin {
           new Notice("⚠️ Failed to refresh statistics. Check console for details.", 5000);
         }
         
-        // Update button states to reflect stopped timer
         if (this.timerManager) {
           this.sidebarView.updateControlButtons(this.timerManager.getState());
         }
       }
 
-      // Clear persisted state
       await this.clearTimerState();
     } catch (error) {
       console.error("Failed to handle timer completion", error);
-      // Show user-facing error for critical failure
       new Notice("⚠️ Failed to complete timer session. Check console for details.", 8000);
+    } finally {
+      this._pendingSession = null;
     }
   }
 
@@ -268,38 +280,66 @@ export default class PomodoroPlugin extends Plugin {
   private async checkIncompleteSession(): Promise<void> {
     try {
       const data = await this.loadData();
-      const persistedState: PersistedTimerState | null = data?.timerState || null;
+      let needsSave = false;
 
-      console.log("Checking for incomplete session:", persistedState);
+      if (data?.pendingSession) {
+        if (this.logManager) {
+          try {
+            await this.logManager.appendSession(data.pendingSession);
+          } catch (e) {
+            console.error("Failed to log pending session:", e);
+          }
+        }
+        delete data.pendingSession;
+        needsSave = true;
+      }
+
+      const persistedState: PersistedTimerState | null = data?.timerState || null;
 
       if (persistedState && persistedState.state.isRunning) {
         const hoursSinceClose = (Date.now() - persistedState.timestamp) / (1000 * 60 * 60);
-        
-        console.log("Found running session, hours since close:", hoursSinceClose);
-        
-        if (hoursSinceClose > 24) {
-          console.log("Ignoring stale timer state (older than 24 hours)");
-          await this.clearTimerState();
-          return;
-        }
 
-        // Restore the timer state and resume it
-        if (this.timerManager) {
-          this.timerManager.loadPersistedState(persistedState.state);
-          
-          const state = this.timerManager.getState();
-          
-          // Update UI
-          if (this.sidebarView) {
-            this.sidebarView.updateTimerDisplay(state.remainingSeconds, state.totalSeconds);
-            this.sidebarView.updateProgress(state.remainingSeconds, state.totalSeconds);
-            this.sidebarView.updateControlButtons(state);
-            this.sidebarView.updateSessionUI(state.sessionType, state.taskName);
+        if (hoursSinceClose > 24) {
+          const pState = persistedState.state;
+          const elapsedSeconds = pState.totalSeconds - pState.remainingSeconds;
+          const incompleteSession: SessionData = {
+            date: new Date(persistedState.timestamp).toISOString().split('T')[0],
+            startTime: pState.startTime
+              ? new Date(pState.startTime).toTimeString().split(' ')[0]
+              : "00:00:00",
+            duration: Math.max(1, Math.floor(elapsedSeconds / 60)),
+            taskName: pState.taskName,
+            status: "incomplete",
+            sessionType: pState.sessionType,
+          };
+
+          if (this.logManager) {
+            await this.logManager.appendSession(incompleteSession);
           }
-          
-          new Notice(`🔄 Timer restored: ${state.taskName}`, 5000);
-          console.log("Timer restored:", state.taskName);
+
+          delete data.timerState;
+          needsSave = true;
+        } else if (this.timerManager) {
+          this.timerManager.loadPersistedState(persistedState.state);
+          this.timerManager.resumeInterval();
+
+          const remaining = this.timerManager.getRemainingTime();
+          const timerState = this.timerManager.getState();
+
+          if (this.sidebarView) {
+            this.sidebarView.updateTimerDisplay(remaining, timerState.totalSeconds);
+            this.sidebarView.updateProgress(remaining, timerState.totalSeconds);
+            this.sidebarView.updateControlButtons(timerState);
+            this.sidebarView.updateSessionUI(timerState.sessionType, timerState.taskName);
+          }
+
+          new Notice(`🔄 Timer restored: ${timerState.taskName}`, 5000);
+          console.log("Timer restored:", timerState.taskName);
         }
+      }
+
+      if (needsSave) {
+        await this.saveData(data);
       }
     } catch (error) {
       console.error("Failed to check incomplete session", error);

@@ -57,6 +57,15 @@ export class NotificationManager {
     }
   }
 
+  notifyTimerStopped(sessionType: "work" | "break"): void {
+    const message =
+      sessionType === "work"
+        ? "⏹️ Work session stopped."
+        : "⏹️ Break session stopped.";
+
+    this.showNotice(message);
+  }
+
   /**
    * Notify about incomplete session on startup
    * @param taskName Name of the task

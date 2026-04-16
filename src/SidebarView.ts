@@ -199,7 +199,9 @@ export class SidebarView extends ItemView {
       btn.addEventListener("click", () => {
         const duration = parseInt(btn.getAttribute("data-duration") || "25", 10);
         this.plugin.settings.workDuration = duration;
-        this.workDurationInput?.setAttribute("value", duration.toString());
+        if (this.workDurationInput) {
+          this.workDurationInput.value = duration.toString();
+        }
         this.plugin.saveSettings();
         
         document.querySelectorAll(".pmd-pill").forEach(b => b.classList.remove("pmd-pill--active"));
@@ -240,9 +242,14 @@ export class SidebarView extends ItemView {
     this.soundEnabledCheckbox = soundGroup.createEl("input", {
       type: "checkbox",
       cls: "pmd-toggle",
+      attr: { id: "pmd-sound-toggle" },
     }) as HTMLInputElement;
     this.soundEnabledCheckbox.checked = this.plugin.settings.soundEnabled;
-    soundGroup.createEl("label", { text: "sound notifications", cls: "pmd-toggle-label" });
+    soundGroup.createEl("label", { 
+      text: "sound notifications", 
+      cls: "pmd-toggle-label",
+      attr: { for: "pmd-sound-toggle" },
+    });
     this.soundEnabledCheckbox.addEventListener("change", () => this.handleSettingsChange());
   }
 
@@ -342,9 +349,6 @@ export class SidebarView extends ItemView {
       this.stopButton.style.display = "none";
       this.startButton.disabled = false;
     }
-    
-    this.startButton.disabled = state.isRunning;
-    this.stopButton.disabled = !state.isRunning;
   }
 
   updateStatistics(stats: Statistics): void {
