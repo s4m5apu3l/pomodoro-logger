@@ -147,6 +147,7 @@ export const timerStateArbitrary: fc.Arbitrary<TimerState> = fc
 			totalSeconds: fc.constant(totalSeconds),
 			taskName: fc.constant(validTaskName),
 			startTime: fc.constant(validStartTime),
+			pauseStartTime: fc.constant(validPaused ? new Date() : null),
 			sessionType: fc.constant(sessionType),
 		});
 	});

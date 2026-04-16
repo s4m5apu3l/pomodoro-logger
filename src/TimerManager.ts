@@ -18,6 +18,7 @@ export class TimerManager {
       totalSeconds: 0,
       taskName: "",
       startTime: null,
+      pauseStartTime: null,
       sessionType: "work",
     };
   }
@@ -52,6 +53,7 @@ export class TimerManager {
       totalSeconds: duration * 60,
       taskName: taskName.trim(),
       startTime: new Date(),
+      pauseStartTime: null,
       sessionType,
     };
 
@@ -80,6 +82,7 @@ export class TimerManager {
     }
 
     this.state.isPaused = true;
+    this.state.pauseStartTime = new Date();
     this.stopInterval();
     if (this.saveStateCallback) {
       const serializable = this.getSerializableState();
@@ -99,11 +102,12 @@ export class TimerManager {
       return;
     }
 
-    // Adjust startTime to account for paused duration
-    // Calculate how much time has elapsed before pause
-    const elapsed = this.state.totalSeconds - this.state.remainingSeconds;
-    this.state.startTime = new Date(Date.now() - elapsed * 1000);
+    if (this.state.pauseStartTime && this.state.startTime) {
+      const pauseDuration = Date.now() - this.state.pauseStartTime.getTime();
+      this.state.startTime = new Date(this.state.startTime.getTime() + pauseDuration);
+    }
 
+    this.state.pauseStartTime = null;
     this.state.isPaused = false;
     this.startInterval();
   }
@@ -137,6 +141,7 @@ export class TimerManager {
       totalSeconds: 0,
       taskName: "",
       startTime: null,
+      pauseStartTime: null,
       sessionType: "work",
     };
 
@@ -194,23 +199,25 @@ export class TimerManager {
   }
 
   // Register save state callback (for auto-save)
-  onSaveState(callback: (state: Omit<TimerState, 'startTime'> & { startTime: string | null }) => void): void {
+  onSaveState(callback: (state: Omit<TimerState, 'startTime' | 'pauseStartTime'> & { startTime: string | null; pauseStartTime: string | null }) => void): void {
     this.saveStateCallback = callback as (state: TimerState) => void;
   }
 
   // Get serializable state (for persistence)
-  getSerializableState(): Omit<TimerState, 'startTime'> & { startTime: string | null } {
+  getSerializableState(): Omit<TimerState, 'startTime' | 'pauseStartTime'> & { startTime: string | null; pauseStartTime: string | null } {
     return {
       ...this.state,
       startTime: this.state.startTime ? this.state.startTime.toISOString() : null,
+      pauseStartTime: this.state.pauseStartTime ? this.state.pauseStartTime.toISOString() : null,
     };
   }
 
   // Load state from persistence
-  loadPersistedState(serializedState: Omit<TimerState, 'startTime'> & { startTime: string | null }): void {
+  loadPersistedState(serializedState: Omit<TimerState, 'startTime' | 'pauseStartTime'> & { startTime: string | null; pauseStartTime: string | null }): void {
     this.state = {
       ...serializedState,
       startTime: serializedState.startTime ? new Date(serializedState.startTime) : null,
+      pauseStartTime: serializedState.pauseStartTime ? new Date(serializedState.pauseStartTime) : null,
     };
   }
 

@@ -502,7 +502,7 @@ describe("PomodoroPlugin", () => {
 	describe("Date Serialization", () => {
 		test("should serialize Date objects when saving timer state", async () => {
 			await plugin.onload();
-
+		
 			const state: TimerState = {
 				isRunning: true,
 				isPaused: false,
@@ -510,19 +510,20 @@ describe("PomodoroPlugin", () => {
 				totalSeconds: 1500,
 				taskName: "Test",
 				startTime: new Date("2024-01-15T10:00:00Z"),
+				pauseStartTime: null,
 				sessionType: "work",
 			};
-
+		
 			await (plugin as any).saveTimerState(state);
-
+		
 			const data = await plugin.loadData();
 			expect(typeof data.timerState.state.startTime).toBe("string");
 			expect(data.timerState.state.startTime).toBe("2024-01-15T10:00:00.000Z");
 		});
-
+		
 		test("should handle null startTime when saving", async () => {
 			await plugin.onload();
-
+		
 			const state: TimerState = {
 				isRunning: true,
 				isPaused: false,
@@ -530,14 +531,16 @@ describe("PomodoroPlugin", () => {
 				totalSeconds: 1500,
 				taskName: "Test",
 				startTime: null,
+				pauseStartTime: null,
 				sessionType: "work",
 			};
-
+		
 			await (plugin as any).saveTimerState(state);
-
+		
 			const data = await plugin.loadData();
 			expect(data.timerState.state.startTime).toBeNull();
 		});
+
 	});
 
 	describe("Error Handling", () => {

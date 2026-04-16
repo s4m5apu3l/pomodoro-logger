@@ -7,6 +7,7 @@ export interface TimerState {
   totalSeconds: number;
   taskName: string;
   startTime: Date | null;
+  pauseStartTime: Date | null;
   sessionType: 'work' | 'break';
 }
 

@@ -285,6 +285,7 @@ export class SidebarView extends ItemView {
       totalSeconds: this.plugin.settings.workDuration * 60,
       taskName: "",
       startTime: null,
+      pauseStartTime: null,
       sessionType: "work",
     };
   }

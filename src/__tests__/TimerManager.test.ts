@@ -164,6 +164,40 @@ describe("TimerManager", () => {
 
 	// ===== UNIT TESTS =====
 
+	describe("Pause/Resume Accuracy", () => {
+		test("should not drift when pausing and resuming multiple times", () => {
+			jest.useFakeTimers();
+			const now = Date.now();
+			jest.setSystemTime(now);
+
+			const timer = new TimerManager({ ...defaultSettings, workDuration: 25 });
+			timer.start("Accuracy test", "work");
+
+			// Sequence of pause/resume with fractional seconds
+			for (let i = 0; i < 5; i++) {
+				// 1. Advance by 1.5 seconds
+				jest.advanceTimersByTime(1500);
+				jest.setSystemTime(Date.now());
+				timer.pause();
+
+				// 2. Wait while paused
+				jest.advanceTimersByTime(1000);
+				jest.setSystemTime(Date.now());
+				timer.resume();
+			}
+
+			// After 5 cycles: 5 * 1.5 = 7.5 seconds should have elapsed
+			const expectedRemaining = (25 * 60) - 7.5;
+			const actualRemaining = timer.getRemainingTime();
+
+			// We expect the floor(remaining) to be floor(1492.5) = 1492
+			expect(actualRemaining).toBe(Math.floor(expectedRemaining));
+
+			timer.stop();
+			jest.useRealTimers();
+		});
+	});
+
 	describe("Unit Tests", () => {
 		test("should start timer with valid task name", () => {
 			const result = timer.start("Write tests", "work");

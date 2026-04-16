@@ -25,7 +25,7 @@ class ObsidianVaultAdapter implements VaultAdapter {
 
 // Interface for persisted timer state
 interface PersistedTimerState {
-  state: Omit<TimerState, 'startTime'> & { startTime: string | null };
+  state: Omit<TimerState, 'startTime' | 'pauseStartTime'> & { startTime: string | null; pauseStartTime: string | null };
   timestamp: number;
 }
 
@@ -355,10 +355,14 @@ export default class PomodoroPlugin extends Plugin {
       const startTimeStr = state.startTime
         ? (typeof state.startTime === "string" ? state.startTime : state.startTime.toISOString())
         : null;
+      const pauseStartTimeStr = state.pauseStartTime
+        ? (typeof state.pauseStartTime === "string" ? state.pauseStartTime : state.pauseStartTime.toISOString())
+        : null;
       const persistedState: PersistedTimerState = {
         state: {
           ...state,
           startTime: startTimeStr,
+          pauseStartTime: pauseStartTimeStr,
         },
         timestamp: Date.now(),
       };
