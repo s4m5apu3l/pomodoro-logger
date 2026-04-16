@@ -1364,11 +1364,11 @@ ${validated.warnings.join("\n")}`, 8e3);
   async saveTimerState(state) {
     try {
       const data = await this.loadData();
+      const startTimeStr = state.startTime ? typeof state.startTime === "string" ? state.startTime : state.startTime.toISOString() : null;
       const persistedState = {
         state: {
           ...state,
-          // Convert Date to ISO string for serialization
-          startTime: state.startTime ? state.startTime.toISOString() : null
+          startTime: startTimeStr
         },
         timestamp: Date.now()
       };
