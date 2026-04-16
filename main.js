@@ -288,6 +288,7 @@ var TimerManager = class {
     const sessionData = {
       date: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
       startTime: this.state.startTime ? this.state.startTime.toTimeString().split(" ")[0] : "00:00:00",
+      endTime: (/* @__PURE__ */ new Date()).toTimeString().split(" ")[0],
       duration: Math.max(1, Math.floor(elapsedSeconds / 60)),
       taskName: this.state.taskName,
       status: "incomplete",
@@ -388,6 +389,7 @@ var TimerManager = class {
     const sessionData = {
       date: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
       startTime: this.state.startTime ? this.state.startTime.toTimeString().split(" ")[0] : "00:00:00",
+      endTime: (/* @__PURE__ */ new Date()).toTimeString().split(" ")[0],
       duration: Math.floor(this.state.totalSeconds / 60),
       taskName: this.state.taskName,
       status: "completed",
@@ -404,15 +406,14 @@ var LogParser = class {
   // Format header for Markdown table
   static formatHeader() {
     return [
-      "| Date       | Start Time | Duration | Task Name        | Status     |",
-      "| ---------- | ---------- | -------- | ---------------- | ---------- |"
+      "| Date       | Start Time | End Time   | Duration | Task Name        | Status     |",
+      "| ---------- | ---------- | ---------- | -------- | ---------------- | ---------- |"
     ].join("\n");
   }
-  // Format a session as a Markdown table row
   static formatSession(session) {
-    const { date, startTime, duration, taskName, status } = session;
+    const { date, startTime, endTime, duration, taskName, status } = session;
     const escapedTaskName = taskName.replace(/\|/g, "\\|");
-    return `| ${date} | ${startTime} | ${duration} | ${escapedTaskName} | ${status} |`;
+    return `| ${date} | ${startTime} | ${endTime} | ${duration} | ${escapedTaskName} | ${status} |`;
   }
   // Parse entire log file content
   static parseLogFile(content) {
@@ -438,14 +439,17 @@ var LogParser = class {
       return null;
     }
     const columns = this.extractColumns(row);
-    if (columns.length !== 5) {
+    if (columns.length !== 6) {
       return null;
     }
-    const [date, startTime, durationStr, taskName, status] = columns;
+    const [date, startTime, endTime, durationStr, taskName, status] = columns;
     if (!/^[+-]?\d{4,6}-\d{2}-\d{2}$/.test(date)) {
       return null;
     }
     if (!/^\d{2}:\d{2}:\d{2}$/.test(startTime)) {
+      return null;
+    }
+    if (!/^\d{2}:\d{2}:\d{2}$/.test(endTime)) {
       return null;
     }
     const duration = parseInt(durationStr, 10);
@@ -458,6 +462,7 @@ var LogParser = class {
     return {
       date,
       startTime,
+      endTime,
       duration,
       taskName,
       status
@@ -470,7 +475,7 @@ var LogParser = class {
     }
     const unescapedPipes = row.replace(/\\\|/g, "  ").match(/\|/g);
     const pipeCount = unescapedPipes ? unescapedPipes.length : 0;
-    if (pipeCount < 6) {
+    if (pipeCount < 7) {
       return false;
     }
     return true;
@@ -667,6 +672,7 @@ var SidebarView = class extends import_obsidian.ItemView {
     this.timerDisplay = null;
     this.timerTask = null;
     this.progressRing = null;
+    this.taskSection = null;
     this.taskNameInput = null;
     this.startButton = null;
     this.pauseButton = null;
@@ -674,7 +680,8 @@ var SidebarView = class extends import_obsidian.ItemView {
     this.stopButton = null;
     this.workDurationInput = null;
     this.breakDurationInput = null;
-    this.soundEnabledCheckbox = null;
+    this.soundEnabledToggle = null;
+    this.soundEnabledState = true;
     this.statisticsContainer = null;
     this.refreshStatsButton = null;
     this.plugin = plugin;
@@ -747,9 +754,9 @@ var SidebarView = class extends import_obsidian.ItemView {
     this.timerTask.setText("ready to focus");
   }
   renderTaskSection(container) {
-    const section = container.createDiv({ cls: "pmd-section" });
-    section.createEl("label", { text: "What are you working on?", cls: "pmd-label" });
-    this.taskNameInput = section.createEl("input", {
+    this.taskSection = container.createDiv({ cls: "pmd-section pmd-task-section" });
+    this.taskSection.createEl("label", { text: "What are you working on?", cls: "pmd-label" });
+    this.taskNameInput = this.taskSection.createEl("input", {
       type: "text",
       placeholder: "Enter task name...",
       cls: "pmd-input"
@@ -850,18 +857,24 @@ var SidebarView = class extends import_obsidian.ItemView {
     });
     this.breakDurationInput.addEventListener("change", () => this.handleSettingsChange());
     const soundGroup = section.createDiv({ cls: "pmd-toggle-row" });
-    this.soundEnabledCheckbox = soundGroup.createEl("input", {
-      type: "checkbox",
-      cls: "pmd-toggle",
-      attr: { id: "pmd-sound-toggle" }
-    });
-    this.soundEnabledCheckbox.checked = this.plugin.settings.soundEnabled;
-    soundGroup.createEl("label", {
+    this.soundEnabledToggle = soundGroup.createDiv({ cls: "pmd-toggle" });
+    this.soundEnabledState = this.plugin.settings.soundEnabled;
+    if (this.soundEnabledState) {
+      this.soundEnabledToggle.classList.add("pmd-toggle--on");
+    }
+    const soundLabel = soundGroup.createEl("span", {
       text: "sound notifications",
-      cls: "pmd-toggle-label",
-      attr: { for: "pmd-sound-toggle" }
+      cls: "pmd-toggle-label"
     });
-    this.soundEnabledCheckbox.addEventListener("change", () => this.handleSettingsChange());
+    const toggleHandler = () => {
+      if (!this.soundEnabledToggle)
+        return;
+      this.soundEnabledState = !this.soundEnabledState;
+      this.soundEnabledToggle.classList.toggle("pmd-toggle--on", this.soundEnabledState);
+      this.handleSettingsChange();
+    };
+    this.soundEnabledToggle.addEventListener("click", toggleHandler);
+    soundLabel.addEventListener("click", toggleHandler);
   }
   renderStatisticsSection(container) {
     const section = container.createDiv({ cls: "pmd-section pmd-section--stats" });
@@ -920,13 +933,18 @@ var SidebarView = class extends import_obsidian.ItemView {
     }
   }
   updateControlButtons(state) {
-    var _a, _b, _c;
+    var _a, _b, _c, _d, _e;
     if (!this.startButton || !this.pauseButton || !this.resumeButton || !this.stopButton) {
       return;
     }
     this.setSettingsEnabled(!state.isRunning);
+    if (state.isRunning) {
+      (_a = this.taskSection) == null ? void 0 : _a.classList.add("pmd-task-section--hidden");
+    } else {
+      (_b = this.taskSection) == null ? void 0 : _b.classList.remove("pmd-task-section--hidden");
+    }
     if (state.isRunning && !state.isPaused) {
-      (_a = this.timerContainer) == null ? void 0 : _a.classList.add("pmd-timer--running");
+      (_c = this.timerContainer) == null ? void 0 : _c.classList.add("pmd-timer--running");
       this.startButton.style.display = "none";
       this.pauseButton.style.display = "flex";
       this.resumeButton.style.display = "none";
@@ -934,7 +952,7 @@ var SidebarView = class extends import_obsidian.ItemView {
       this.pauseButton.disabled = false;
       this.stopButton.disabled = false;
     } else if (state.isRunning && state.isPaused) {
-      (_b = this.timerContainer) == null ? void 0 : _b.classList.remove("pmd-timer--running");
+      (_d = this.timerContainer) == null ? void 0 : _d.classList.remove("pmd-timer--running");
       this.startButton.style.display = "none";
       this.pauseButton.style.display = "flex";
       this.resumeButton.style.display = "flex";
@@ -943,7 +961,7 @@ var SidebarView = class extends import_obsidian.ItemView {
       this.resumeButton.disabled = false;
       this.stopButton.disabled = false;
     } else {
-      (_c = this.timerContainer) == null ? void 0 : _c.classList.remove("pmd-timer--running");
+      (_e = this.timerContainer) == null ? void 0 : _e.classList.remove("pmd-timer--running");
       this.startButton.style.display = "flex";
       this.pauseButton.style.display = "none";
       this.resumeButton.style.display = "none";
@@ -1063,7 +1081,7 @@ var SidebarView = class extends import_obsidian.ItemView {
   }
   async handleSettingsChange() {
     var _a;
-    if (!this.workDurationInput || !this.breakDurationInput || !this.soundEnabledCheckbox)
+    if (!this.workDurationInput || !this.breakDurationInput)
       return;
     try {
       const workDuration = parseInt(this.workDurationInput.value, 10);
@@ -1080,7 +1098,7 @@ var SidebarView = class extends import_obsidian.ItemView {
       }
       this.plugin.settings.workDuration = workDuration;
       this.plugin.settings.breakDuration = breakDuration;
-      this.plugin.settings.soundEnabled = this.soundEnabledCheckbox.checked;
+      this.plugin.settings.soundEnabled = this.soundEnabledState;
       await this.plugin.saveSettings();
       if (!((_a = this.plugin.timerManager) == null ? void 0 : _a.getState().isRunning)) {
         const defaultState = this.getDefaultState();
@@ -1241,6 +1259,7 @@ ${validated.warnings.join("\n")}`, 8e3);
   onTimerTick(remainingSeconds, totalSeconds) {
     if (this.sidebarView) {
       this.sidebarView.updateTimerDisplay(remainingSeconds, totalSeconds);
+      this.sidebarView.updateProgress(remainingSeconds, totalSeconds);
     }
   }
   // Event handler: Timer complete
@@ -1328,6 +1347,7 @@ ${validated.warnings.join("\n")}`, 8e3);
           const incompleteSession = {
             date: new Date(persistedState.timestamp).toISOString().split("T")[0],
             startTime: pState.startTime ? new Date(pState.startTime).toTimeString().split(" ")[0] : "00:00:00",
+            endTime: new Date(persistedState.timestamp).toTimeString().split(" ")[0],
             duration: Math.max(1, Math.floor(elapsedSeconds / 60)),
             taskName: pState.taskName,
             status: "incomplete",
