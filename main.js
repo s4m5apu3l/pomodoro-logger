@@ -71,7 +71,8 @@ var init_StatisticsCalculator = __esm({
        */
       static filterByDate(sessions, startDate, endDate) {
         return sessions.filter((session) => {
-          const sessionDate = new Date(session.date);
+          const [year, month, day] = session.date.split("-").map(Number);
+          const sessionDate = new Date(year, month - 1, day);
           return sessionDate >= startDate && sessionDate <= endDate;
         });
       }
@@ -256,7 +257,10 @@ var TimerManager = class {
     }
     this.state.isPaused = true;
     this.stopInterval();
-    this.saveState();
+    if (this.saveStateCallback) {
+      const serializable = this.getSerializableState();
+      this.saveStateCallback(serializable);
+    }
   }
   // Resume timer
   resume() {
@@ -273,13 +277,22 @@ var TimerManager = class {
     this.state.isPaused = false;
     this.startInterval();
   }
-  // Stop timer
+  // Stop timer — logs incomplete session via completeCallbacks
   stop() {
     if (!this.state.isRunning) {
       console.warn("Cannot stop: timer is not running");
-      return;
+      return null;
     }
     this.stopInterval();
+    const elapsedSeconds = this.state.totalSeconds - this.state.remainingSeconds;
+    const sessionData = {
+      date: (/* @__PURE__ */ new Date()).toISOString().split("T")[0],
+      startTime: this.state.startTime ? this.state.startTime.toTimeString().split(" ")[0] : "00:00:00",
+      duration: Math.max(1, Math.floor(elapsedSeconds / 60)),
+      taskName: this.state.taskName,
+      status: "incomplete",
+      sessionType: this.state.sessionType
+    };
     this.state = {
       isRunning: false,
       isPaused: false,
@@ -289,12 +302,20 @@ var TimerManager = class {
       startTime: null,
       sessionType: "work"
     };
+    this.completeCallbacks.forEach((cb) => cb(sessionData));
+    return sessionData;
   }
   // Force stop interval (for unload)
   stopInterval() {
     if (this.intervalId !== null) {
       clearInterval(this.intervalId);
       this.intervalId = null;
+    }
+  }
+  // Start interval for a restored timer (after loadPersistedState)
+  resumeInterval() {
+    if (this.state.isRunning && !this.state.isPaused) {
+      this.startInterval();
     }
   }
   // Get current state
@@ -340,14 +361,7 @@ var TimerManager = class {
       startTime: serializedState.startTime ? new Date(serializedState.startTime) : null
     };
   }
-  // Save state (for persistence)
-  saveState() {
-  }
-  // Load state (for persistence)
-  loadState() {
-    return null;
-  }
-  // Private: Start interval
+  // Private: Handle completion
   startInterval() {
     let tickCount = 0;
     this.intervalId = window.setInterval(() => {
@@ -376,7 +390,8 @@ var TimerManager = class {
       startTime: this.state.startTime ? this.state.startTime.toTimeString().split(" ")[0] : "00:00:00",
       duration: Math.floor(this.state.totalSeconds / 60),
       taskName: this.state.taskName,
-      status: "completed"
+      status: "completed",
+      sessionType: this.state.sessionType
     };
     this.state.isRunning = false;
     this.state.isPaused = false;
@@ -453,7 +468,8 @@ var LogParser = class {
     if (!row.startsWith("|") || !row.endsWith("|")) {
       return false;
     }
-    const pipeCount = (row.match(/\|/g) || []).length;
+    const unescapedPipes = row.replace(/\\\|/g, "  ").match(/\|/g);
+    const pipeCount = unescapedPipes ? unescapedPipes.length : 0;
     if (pipeCount < 6) {
       return false;
     }
@@ -579,6 +595,10 @@ var NotificationManager = class {
     if (this.settings.soundEnabled) {
       this.playSound();
     }
+  }
+  notifyTimerStopped(sessionType) {
+    const message = sessionType === "work" ? "\u23F9\uFE0F Work session stopped." : "\u23F9\uFE0F Break session stopped.";
+    this.showNotice(message);
   }
   /**
    * Notify about incomplete session on startup
@@ -795,10 +815,11 @@ var SidebarView = class extends import_obsidian.ItemView {
     });
     [pomodoroBtn, shortBtn, longBtn].forEach((btn) => {
       btn.addEventListener("click", () => {
-        var _a;
         const duration = parseInt(btn.getAttribute("data-duration") || "25", 10);
         this.plugin.settings.workDuration = duration;
-        (_a = this.workDurationInput) == null ? void 0 : _a.setAttribute("value", duration.toString());
+        if (this.workDurationInput) {
+          this.workDurationInput.value = duration.toString();
+        }
         this.plugin.saveSettings();
         document.querySelectorAll(".pmd-pill").forEach((b) => b.classList.remove("pmd-pill--active"));
         btn.classList.add("pmd-pill--active");
@@ -831,10 +852,15 @@ var SidebarView = class extends import_obsidian.ItemView {
     const soundGroup = section.createDiv({ cls: "pmd-toggle-row" });
     this.soundEnabledCheckbox = soundGroup.createEl("input", {
       type: "checkbox",
-      cls: "pmd-toggle"
+      cls: "pmd-toggle",
+      attr: { id: "pmd-sound-toggle" }
     });
     this.soundEnabledCheckbox.checked = this.plugin.settings.soundEnabled;
-    soundGroup.createEl("label", { text: "sound notifications", cls: "pmd-toggle-label" });
+    soundGroup.createEl("label", {
+      text: "sound notifications",
+      cls: "pmd-toggle-label",
+      attr: { for: "pmd-sound-toggle" }
+    });
     this.soundEnabledCheckbox.addEventListener("change", () => this.handleSettingsChange());
   }
   renderStatisticsSection(container) {
@@ -924,8 +950,6 @@ var SidebarView = class extends import_obsidian.ItemView {
       this.stopButton.style.display = "none";
       this.startButton.disabled = false;
     }
-    this.startButton.disabled = state.isRunning;
-    this.stopButton.disabled = !state.isRunning;
   }
   updateStatistics(stats) {
     if (!this.statisticsContainer)
@@ -1092,6 +1116,7 @@ var PomodoroPlugin = class extends import_obsidian2.Plugin {
     this.logManager = null;
     this.notificationManager = null;
     this.sidebarView = null;
+    this._pendingSession = null;
   }
   async onload() {
     console.log("Loading Enhanced Pomodoro Timer plugin");
@@ -1143,6 +1168,15 @@ var PomodoroPlugin = class extends import_obsidian2.Plugin {
           console.log("Timer state saved on unload:", state.taskName);
         } catch (e) {
           console.error("Failed to save timer state on unload:", e);
+        }
+      }
+      if (this._pendingSession) {
+        try {
+          const data = await this.loadData();
+          data.pendingSession = this._pendingSession;
+          await this.saveData(data);
+        } catch (e) {
+          console.error("Failed to save pending session on unload:", e);
         }
       }
     }
@@ -1211,7 +1245,8 @@ ${validated.warnings.join("\n")}`, 8e3);
   }
   // Event handler: Timer complete
   async onTimerComplete(sessionData) {
-    var _a;
+    var _a, _b, _c, _d;
+    this._pendingSession = sessionData;
     try {
       if (this.logManager) {
         const result = await this.logManager.appendSession(sessionData);
@@ -1220,12 +1255,15 @@ ${validated.warnings.join("\n")}`, 8e3);
           new import_obsidian2.Notice("\u26A0\uFE0F Failed to save session to log. Session data may be lost.", 8e3);
         }
       }
-      if (this.notificationManager) {
-        this.notificationManager.notifyTimerCompleted(sessionData.status === "completed" ? "work" : "break");
+      const sessionType = (_a = sessionData.sessionType) != null ? _a : "work";
+      if (sessionData.status === "completed") {
+        (_b = this.notificationManager) == null ? void 0 : _b.notifyTimerCompleted(sessionType);
+      } else {
+        (_c = this.notificationManager) == null ? void 0 : _c.notifyTimerStopped(sessionType);
       }
       if (this.sidebarView) {
         try {
-          const sessions = await ((_a = this.logManager) == null ? void 0 : _a.readAllSessions()) || [];
+          const sessions = await ((_d = this.logManager) == null ? void 0 : _d.readAllSessions()) || [];
           const { StatisticsCalculator: StatisticsCalculator2 } = await Promise.resolve().then(() => (init_StatisticsCalculator(), StatisticsCalculator_exports));
           const stats = StatisticsCalculator2.calculate(sessions);
           this.sidebarView.updateStatistics(stats);
@@ -1241,6 +1279,8 @@ ${validated.warnings.join("\n")}`, 8e3);
     } catch (error) {
       console.error("Failed to handle timer completion", error);
       new import_obsidian2.Notice("\u26A0\uFE0F Failed to complete timer session. Check console for details.", 8e3);
+    } finally {
+      this._pendingSession = null;
     }
   }
   // Activate sidebar view
@@ -1267,28 +1307,54 @@ ${validated.warnings.join("\n")}`, 8e3);
   async checkIncompleteSession() {
     try {
       const data = await this.loadData();
+      let needsSave = false;
+      if (data == null ? void 0 : data.pendingSession) {
+        if (this.logManager) {
+          try {
+            await this.logManager.appendSession(data.pendingSession);
+          } catch (e) {
+            console.error("Failed to log pending session:", e);
+          }
+        }
+        delete data.pendingSession;
+        needsSave = true;
+      }
       const persistedState = (data == null ? void 0 : data.timerState) || null;
-      console.log("Checking for incomplete session:", persistedState);
       if (persistedState && persistedState.state.isRunning) {
         const hoursSinceClose = (Date.now() - persistedState.timestamp) / (1e3 * 60 * 60);
-        console.log("Found running session, hours since close:", hoursSinceClose);
         if (hoursSinceClose > 24) {
-          console.log("Ignoring stale timer state (older than 24 hours)");
-          await this.clearTimerState();
-          return;
-        }
-        if (this.timerManager) {
-          this.timerManager.loadPersistedState(persistedState.state);
-          const state = this.timerManager.getState();
-          if (this.sidebarView) {
-            this.sidebarView.updateTimerDisplay(state.remainingSeconds, state.totalSeconds);
-            this.sidebarView.updateProgress(state.remainingSeconds, state.totalSeconds);
-            this.sidebarView.updateControlButtons(state);
-            this.sidebarView.updateSessionUI(state.sessionType, state.taskName);
+          const pState = persistedState.state;
+          const elapsedSeconds = pState.totalSeconds - pState.remainingSeconds;
+          const incompleteSession = {
+            date: new Date(persistedState.timestamp).toISOString().split("T")[0],
+            startTime: pState.startTime ? new Date(pState.startTime).toTimeString().split(" ")[0] : "00:00:00",
+            duration: Math.max(1, Math.floor(elapsedSeconds / 60)),
+            taskName: pState.taskName,
+            status: "incomplete",
+            sessionType: pState.sessionType
+          };
+          if (this.logManager) {
+            await this.logManager.appendSession(incompleteSession);
           }
-          new import_obsidian2.Notice(`\u{1F504} Timer restored: ${state.taskName}`, 5e3);
-          console.log("Timer restored:", state.taskName);
+          delete data.timerState;
+          needsSave = true;
+        } else if (this.timerManager) {
+          this.timerManager.loadPersistedState(persistedState.state);
+          this.timerManager.resumeInterval();
+          const remaining = this.timerManager.getRemainingTime();
+          const timerState = this.timerManager.getState();
+          if (this.sidebarView) {
+            this.sidebarView.updateTimerDisplay(remaining, timerState.totalSeconds);
+            this.sidebarView.updateProgress(remaining, timerState.totalSeconds);
+            this.sidebarView.updateControlButtons(timerState);
+            this.sidebarView.updateSessionUI(timerState.sessionType, timerState.taskName);
+          }
+          new import_obsidian2.Notice(`\u{1F504} Timer restored: ${timerState.taskName}`, 5e3);
+          console.log("Timer restored:", timerState.taskName);
         }
+      }
+      if (needsSave) {
+        await this.saveData(data);
       }
     } catch (error) {
       console.error("Failed to check incomplete session", error);
