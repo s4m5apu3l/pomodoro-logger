@@ -200,6 +200,7 @@ export default class PomodoroPlugin extends Plugin {
   private onTimerTick(remainingSeconds: number, totalSeconds: number): void {
     if (this.sidebarView) {
       this.sidebarView.updateTimerDisplay(remainingSeconds, totalSeconds);
+      this.sidebarView.updateProgress(remainingSeconds, totalSeconds);
     }
   }
 
@@ -307,6 +308,7 @@ export default class PomodoroPlugin extends Plugin {
             startTime: pState.startTime
               ? new Date(pState.startTime).toTimeString().split(' ')[0]
               : "00:00:00",
+            endTime: new Date(persistedState.timestamp).toTimeString().split(' ')[0],
             duration: Math.max(1, Math.floor(elapsedSeconds / 60)),
             taskName: pState.taskName,
             status: "incomplete",

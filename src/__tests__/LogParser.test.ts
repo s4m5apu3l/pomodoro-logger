@@ -21,6 +21,7 @@ describe("LogParser", () => {
 					if (parsed) {
 						expect(parsed.date).toBe(session.date);
 						expect(parsed.startTime).toBe(session.startTime);
+						expect(parsed.endTime).toBe(session.endTime);
 						expect(parsed.duration).toBe(session.duration);
 						expect(parsed.taskName).toBe(session.taskName);
 						expect(parsed.status).toBe(session.status);
@@ -43,12 +44,14 @@ describe("LogParser", () => {
 					if (parsed) {
 						expect(parsed).toHaveProperty("date");
 						expect(parsed).toHaveProperty("startTime");
+						expect(parsed).toHaveProperty("endTime");
 						expect(parsed).toHaveProperty("duration");
 						expect(parsed).toHaveProperty("taskName");
 						expect(parsed).toHaveProperty("status");
 
 						expect(parsed.date).toBe(expected.date);
 						expect(parsed.startTime).toBe(expected.startTime);
+						expect(parsed.endTime).toBe(expected.endTime);
 						expect(parsed.duration).toBe(expected.duration);
 						expect(parsed.taskName).toBe(expected.taskName);
 						expect(parsed.status).toBe(expected.status);
@@ -82,7 +85,7 @@ describe("LogParser", () => {
 			const header = LogParser.formatHeader();
 
 			expect(header).toContain("| Date");
-			expect(header).toContain("| Start Time");
+			expect(header).toContain("| End Time");
 			expect(header).toContain("| Duration");
 			expect(header).toContain("| Task Name");
 			expect(header).toContain("| Status");
@@ -93,6 +96,7 @@ describe("LogParser", () => {
 			const session: SessionData = {
 				date: "2024-01-15",
 				startTime: "09:30:00",
+				endTime: "09:55:00",
 				duration: 25,
 				taskName: "Write tests",
 				status: "completed",
@@ -101,7 +105,7 @@ describe("LogParser", () => {
 			const row = LogParser.formatSession(session);
 
 			expect(row).toBe(
-				"| 2024-01-15 | 09:30:00 | 25 | Write tests | completed |",
+				"| 2024-01-15 | 09:30:00 | 09:55:00 | 25 | Write tests | completed |",
 			);
 		});
 
@@ -109,6 +113,7 @@ describe("LogParser", () => {
 			const session: SessionData = {
 				date: "2024-01-15",
 				startTime: "09:30:00",
+				endTime: "09:55:00",
 				duration: 25,
 				taskName: "Task | with | pipes",
 				status: "completed",
@@ -120,7 +125,7 @@ describe("LogParser", () => {
 		});
 
 		test("should parse valid markdown row", () => {
-			const row = "| 2024-01-15 | 09:30:00 | 25 | Write tests | completed |";
+			const row = "| 2024-01-15 | 09:30:00 | 09:55:00 | 25 | Write tests | completed |";
 			const parsed = LogParser.parseRow(row);
 
 			expect(parsed).not.toBeNull();
@@ -133,7 +138,7 @@ describe("LogParser", () => {
 
 		test("should unescape pipe characters in task name", () => {
 			const row =
-				"| 2024-01-15 | 09:30:00 | 25 | Task \\| with \\| pipes | completed |";
+				"| 2024-01-15 | 09:30:00 | 09:55:00 | 25 | Task \\| with \\| pipes | completed |";
 			const parsed = LogParser.parseRow(row);
 
 			expect(parsed).not.toBeNull();
@@ -154,20 +159,20 @@ describe("LogParser", () => {
 		});
 
 		test("should return null for invalid date format", () => {
-			const row = "| 2024/01/15 | 09:30:00 | 25 | Task | completed |";
+			const row = "| 2024/01/15 | 09:30:00 | 09:55:00 | 25 | Task | completed |";
 			expect(LogParser.parseRow(row)).toBeNull();
 		});
 
 		test("should return null for invalid time format", () => {
-			const row = "| 2024-01-15 | 9:30:00 | 25 | Task | completed |";
+			const row = "| 2024-01-15 | 9:30:00 | 09:55:00 | 25 | Task | completed |";
 			expect(LogParser.parseRow(row)).toBeNull();
 		});
 
 		test("should return null for invalid duration", () => {
 			const invalidRows = [
-				"| 2024-01-15 | 09:30:00 | abc | Task | completed |",
-				"| 2024-01-15 | 09:30:00 | -5 | Task | completed |",
-				"| 2024-01-15 | 09:30:00 | 0 | Task | completed |",
+				"| 2024-01-15 | 09:30:00 | 09:55:00 | abc | Task | completed |",
+				"| 2024-01-15 | 09:30:00 | 09:55:00 | -5 | Task | completed |",
+				"| 2024-01-15 | 09:30:00 | 09:55:00 | 0 | Task | completed |",
 			];
 
 			invalidRows.forEach((row) => {
@@ -176,16 +181,16 @@ describe("LogParser", () => {
 		});
 
 		test("should return null for invalid status", () => {
-			const row = "| 2024-01-15 | 09:30:00 | 25 | Task | invalid |";
+			const row = "| 2024-01-15 | 09:30:00 | 09:55:00 | 25 | Task | invalid |";
 			expect(LogParser.parseRow(row)).toBeNull();
 		});
 
 		test("should parse log file with multiple sessions", () => {
-			const content = `| Date       | Start Time | Duration | Task Name        | Status     |
-| ---------- | ---------- | -------- | ---------------- | ---------- |
-| 2024-01-15 | 09:30:00   | 25       | Write docs       | completed  |
-| 2024-01-15 | 10:00:00   | 5        | Break            | completed  |
-| 2024-01-15 | 10:05:00   | 15       | Code review      | incomplete |`;
+			const content = `| Date       | Start Time | End Time   | Duration | Task Name        | Status     |
+| ---------- | ---------- | ---------- | -------- | ---------------- | ---------- |
+| 2024-01-15 | 09:30:00   | 09:55:00   | 25       | Write docs       | completed  |
+| 2024-01-15 | 10:00:00   | 10:05:00   | 5        | Break            | completed  |
+| 2024-01-15 | 10:05:00   | 10:20:00   | 15       | Code review      | incomplete |`;
 
 			const sessions = LogParser.parseLogFile(content);
 
@@ -197,11 +202,11 @@ describe("LogParser", () => {
 		});
 
 		test("should skip invalid rows and continue parsing", () => {
-			const content = `| Date       | Start Time | Duration | Task Name        | Status     |
-| ---------- | ---------- | -------- | ---------------- | ---------- |
-| 2024-01-15 | 09:30:00   | 25       | Valid task       | completed  |
+			const content = `| Date       | Start Time | End Time   | Duration | Task Name        | Status     |
+| ---------- | ---------- | ---------- | -------- | ---------------- | ---------- |
+| 2024-01-15 | 09:30:00   | 09:55:00   | 25       | Valid task       | completed  |
 invalid row here
-| 2024-01-15 | 10:00:00   | 5        | Another valid    | completed  |`;
+| 2024-01-15 | 10:00:00   | 10:05:00   | 5        | Another valid    | completed  |`;
 
 			const consoleSpy = jest.spyOn(console, "warn").mockImplementation();
 

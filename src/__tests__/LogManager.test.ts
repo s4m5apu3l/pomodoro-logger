@@ -113,6 +113,7 @@ describe("LogManager", () => {
 			const session: SessionData = {
 				date: "2024-01-15",
 				startTime: "09:30:00",
+				endTime: "09:55:00",
 				duration: 25,
 				taskName: "Test",
 				status: "completed",
@@ -124,6 +125,7 @@ describe("LogManager", () => {
 			// Should have header
 			expect(content).toContain("| Date");
 			expect(content).toContain("| Start Time");
+			expect(content).toContain("| End Time");
 			expect(content).toContain("| Duration");
 			expect(content).toContain("| Task Name");
 			expect(content).toContain("| Status");
@@ -145,6 +147,7 @@ describe("LogManager", () => {
 				{
 					date: "2024-01-15",
 					startTime: "09:00:00",
+					endTime: "09:25:00",
 					duration: 25,
 					taskName: "First",
 					status: "completed",
@@ -152,6 +155,7 @@ describe("LogManager", () => {
 				{
 					date: "2024-01-15",
 					startTime: "10:00:00",
+					endTime: "10:25:00",
 					duration: 25,
 					taskName: "Second",
 					status: "completed",
@@ -159,6 +163,7 @@ describe("LogManager", () => {
 				{
 					date: "2024-01-15",
 					startTime: "11:00:00",
+					endTime: "11:25:00",
 					duration: 25,
 					taskName: "Third",
 					status: "completed",
@@ -185,8 +190,9 @@ describe("LogManager", () => {
 			const session: SessionData = {
 				date: "2024-01-15",
 				startTime: "09:30:00",
+				endTime: "09:55:00",
 				duration: 25,
-				taskName: "First session",
+				taskName: "Test",
 				status: "completed",
 			};
 
@@ -201,6 +207,7 @@ describe("LogManager", () => {
 			const session: SessionData = {
 				date: "2024-01-15",
 				startTime: "09:30:00",
+				endTime: "09:55:00",
 				duration: 25,
 				taskName: "Test",
 				status: "completed",
@@ -216,6 +223,7 @@ describe("LogManager", () => {
 			const session1: SessionData = {
 				date: "2024-01-15",
 				startTime: "09:00:00",
+				endTime: "09:25:00",
 				duration: 25,
 				taskName: "First",
 				status: "completed",
@@ -224,6 +232,7 @@ describe("LogManager", () => {
 			const session2: SessionData = {
 				date: "2024-01-15",
 				startTime: "10:00:00",
+				endTime: "10:25:00",
 				duration: 25,
 				taskName: "Second",
 				status: "completed",
@@ -246,6 +255,7 @@ describe("LogManager", () => {
 				{
 					date: "2024-01-15",
 					startTime: "09:00:00",
+					endTime: "09:25:00",
 					duration: 25,
 					taskName: "Task 1",
 					status: "completed",
@@ -253,6 +263,7 @@ describe("LogManager", () => {
 				{
 					date: "2024-01-15",
 					startTime: "10:00:00",
+					endTime: "10:05:00",
 					duration: 5,
 					taskName: "Break",
 					status: "completed",
@@ -260,6 +271,7 @@ describe("LogManager", () => {
 				{
 					date: "2024-01-15",
 					startTime: "10:05:00",
+					endTime: "10:20:00",
 					duration: 15,
 					taskName: "Task 2",
 					status: "incomplete",
@@ -284,6 +296,7 @@ describe("LogManager", () => {
 				{
 					date: "2024-01-10",
 					startTime: "09:00:00",
+					endTime: "09:25:00",
 					duration: 25,
 					taskName: "Old",
 					status: "completed",
@@ -291,6 +304,7 @@ describe("LogManager", () => {
 				{
 					date: "2024-01-15",
 					startTime: "09:00:00",
+					endTime: "09:25:00",
 					duration: 25,
 					taskName: "In range 1",
 					status: "completed",
@@ -298,6 +312,7 @@ describe("LogManager", () => {
 				{
 					date: "2024-01-16",
 					startTime: "09:00:00",
+					endTime: "09:25:00",
 					duration: 25,
 					taskName: "In range 2",
 					status: "completed",
@@ -305,6 +320,7 @@ describe("LogManager", () => {
 				{
 					date: "2024-01-20",
 					startTime: "09:00:00",
+					endTime: "09:25:00",
 					duration: 25,
 					taskName: "Future",
 					status: "completed",
@@ -339,6 +355,7 @@ describe("LogManager", () => {
 			const session: SessionData = {
 				date: "2024-01-15",
 				startTime: "09:00:00",
+				endTime: "09:25:00",
 				duration: 25,
 				taskName: "Test",
 				status: "completed",

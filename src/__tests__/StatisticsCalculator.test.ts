@@ -19,6 +19,7 @@ describe("StatisticsCalculator", () => {
 			const session: SessionData = {
 				date: today.toISOString().split("T")[0],
 				startTime: "09:00:00",
+				endTime: "09:25:00",
 				duration: 25,
 				taskName: "Test task",
 				status: "completed",
@@ -42,14 +43,16 @@ describe("StatisticsCalculator", () => {
 				{
 					date: dateStr,
 					startTime: "09:00:00",
+					endTime: "09:25:00",
 					duration: 25,
 					taskName: "Completed task",
 					status: "completed",
 				},
 				{
 					date: dateStr,
-					startTime: "10:00:00",
-					duration: 15,
+				startTime: "10:00:00",
+				endTime: "10:15:00",
+				duration: 15,
 					taskName: "Incomplete task",
 					status: "incomplete",
 				},
@@ -76,6 +79,7 @@ describe("StatisticsCalculator", () => {
 				{
 					date: today.toISOString().split("T")[0],
 					startTime: "09:00:00",
+					endTime: "09:25:00",
 					duration: 25,
 					taskName: "Today",
 					status: "completed",
@@ -83,6 +87,7 @@ describe("StatisticsCalculator", () => {
 				{
 					date: yesterday.toISOString().split("T")[0],
 					startTime: "09:00:00",
+					endTime: "09:25:00",
 					duration: 25,
 					taskName: "Yesterday",
 					status: "completed",
@@ -90,6 +95,7 @@ describe("StatisticsCalculator", () => {
 				{
 					date: lastWeek.toISOString().split("T")[0],
 					startTime: "09:00:00",
+					endTime: "09:25:00",
 					duration: 25,
 					taskName: "Last week",
 					status: "completed",
@@ -97,6 +103,7 @@ describe("StatisticsCalculator", () => {
 				{
 					date: lastMonth.toISOString().split("T")[0],
 					startTime: "09:00:00",
+					endTime: "09:25:00",
 					duration: 25,
 					taskName: "Last month",
 					status: "completed",
@@ -122,6 +129,7 @@ describe("StatisticsCalculator", () => {
 				{
 					date: "2024-01-15",
 					startTime: "09:00:00",
+					endTime: "09:25:00",
 					duration: 25,
 					taskName: "Task 1",
 					status: "completed",
@@ -129,6 +137,7 @@ describe("StatisticsCalculator", () => {
 				{
 					date: "2024-01-16",
 					startTime: "09:00:00",
+					endTime: "09:25:00",
 					duration: 25,
 					taskName: "Task 2",
 					status: "completed",
@@ -136,6 +145,7 @@ describe("StatisticsCalculator", () => {
 				{
 					date: "2024-01-17",
 					startTime: "09:00:00",
+					endTime: "09:25:00",
 					duration: 25,
 					taskName: "Task 3",
 					status: "completed",
@@ -161,6 +171,7 @@ describe("StatisticsCalculator", () => {
 				{
 					date: "2024-01-15",
 					startTime: "09:00:00",
+					endTime: "09:25:00",
 					duration: 25,
 					taskName: "Task 1",
 					status: "completed",
@@ -184,6 +195,7 @@ describe("StatisticsCalculator", () => {
 				{
 					date: "2024-01-15",
 					startTime: "09:00:00",
+					endTime: "09:25:00",
 					duration: 25,
 					taskName: "Task 1",
 					status: "completed",
@@ -209,21 +221,24 @@ describe("StatisticsCalculator", () => {
 				{
 					date: "2024-01-15",
 					startTime: "09:00:00",
+					endTime: "09:25:00",
 					duration: 25,
 					taskName: "Completed",
 					status: "completed",
 				},
 				{
 					date: "2024-01-15",
-					startTime: "10:00:00",
-					duration: 15,
+				startTime: "10:00:00",
+				endTime: "10:15:00",
+				duration: 15,
 					taskName: "Incomplete",
 					status: "incomplete",
 				},
 				{
 					date: "2024-01-15",
-					startTime: "11:00:00",
-					duration: 25,
+				startTime: "11:00:00",
+				endTime: "11:25:00",
+				duration: 25,
 					taskName: "Another completed",
 					status: "completed",
 				},
@@ -241,6 +256,7 @@ describe("StatisticsCalculator", () => {
 				{
 					date: "2024-01-15",
 					startTime: "09:00:00",
+					endTime: "09:25:00",
 					duration: 25,
 					taskName: "Incomplete",
 					status: "incomplete",
@@ -259,21 +275,24 @@ describe("StatisticsCalculator", () => {
 				{
 					date: "2024-01-15",
 					startTime: "09:00:00",
+					endTime: "09:25:00",
 					duration: 25,
 					taskName: "Task 1",
 					status: "completed",
 				},
 				{
 					date: "2024-01-15",
-					startTime: "10:00:00",
-					duration: 5,
+				startTime: "10:00:00",
+				endTime: "10:05:00",
+				duration: 5,
 					taskName: "Task 2",
 					status: "completed",
 				},
 				{
 					date: "2024-01-15",
-					startTime: "11:00:00",
-					duration: 25,
+				startTime: "11:00:00",
+				endTime: "11:25:00",
+				duration: 25,
 					taskName: "Task 3",
 					status: "completed",
 				},
@@ -391,8 +410,9 @@ describe("StatisticsCalculator", () => {
 			const sessions: SessionData[] = [
 				{
 					date: "2024-01-15",
-					startTime: "00:00:00",
-					duration: 25,
+				startTime: "00:00:00",
+				endTime: "00:25:00",
+				duration: 25,
 					taskName: "Midnight task",
 					status: "completed",
 				},

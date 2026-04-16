@@ -311,6 +311,7 @@ describe("PomodoroPlugin", () => {
 			const sessionData: SessionData = {
 				date: "2024-01-15",
 				startTime: "10:00:00",
+				endTime: "10:25:00",
 				duration: 25,
 				taskName: "Test Task",
 				status: "completed",
@@ -328,6 +329,7 @@ describe("PomodoroPlugin", () => {
 			const sessionData: SessionData = {
 				date: "2024-01-15",
 				startTime: "10:00:00",
+				endTime: "10:25:00",
 				duration: 25,
 				taskName: "Test Task",
 				status: "completed",
@@ -353,6 +355,7 @@ describe("PomodoroPlugin", () => {
 			const sessionData: SessionData = {
 				date: "2024-01-15",
 				startTime: "10:00:00",
+				endTime: "10:25:00",
 				duration: 25,
 				taskName: "Test Task",
 				status: "completed",
@@ -375,6 +378,7 @@ describe("PomodoroPlugin", () => {
 			const sessionData: SessionData = {
 				date: "2024-01-15",
 				startTime: "10:00:00",
+				endTime: "10:25:00",
 				duration: 25,
 				taskName: "Test Task",
 				status: "completed",
@@ -399,6 +403,7 @@ describe("PomodoroPlugin", () => {
 			const sessionData: SessionData = {
 				date: "2024-01-15",
 				startTime: "10:00:00",
+				endTime: "10:25:00",
 				duration: 25,
 				taskName: "Test Task",
 				status: "completed",
@@ -436,6 +441,7 @@ describe("PomodoroPlugin", () => {
 			const sessionData: SessionData = {
 				date: "2024-01-15",
 				startTime: "10:00:00",
+				endTime: "10:25:00",
 				duration: 25,
 				taskName: "Test Task",
 				status: "completed",
@@ -453,19 +459,16 @@ describe("PomodoroPlugin", () => {
 		test("should update UI on every timer tick", async () => {
 			await plugin.onload();
 
-			// Mock sidebar view
 			const mockSidebarView = {
 				updateTimerDisplay: jest.fn(),
+				updateProgress: jest.fn(),
 			};
 			plugin.sidebarView = mockSidebarView as any;
 
-			// Trigger tick event
 			(plugin as any).onTimerTick(1234, 1500);
 
-			expect(mockSidebarView.updateTimerDisplay).toHaveBeenCalledWith(
-				1234,
-				1500,
-			);
+			expect(mockSidebarView.updateTimerDisplay).toHaveBeenCalledWith(1234, 1500);
+			expect(mockSidebarView.updateProgress).toHaveBeenCalledWith(1234, 1500);
 		});
 
 		test("should not crash if sidebar view is null during tick", async () => {
@@ -483,6 +486,7 @@ describe("PomodoroPlugin", () => {
 			const sessionData: SessionData = {
 				date: "2024-01-15",
 				startTime: "10:00:00",
+				endTime: "10:25:00",
 				duration: 25,
 				taskName: "Test Task",
 				status: "completed",

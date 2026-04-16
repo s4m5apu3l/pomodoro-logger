@@ -123,6 +123,7 @@ export class TimerManager {
       startTime: this.state.startTime 
         ? this.state.startTime.toTimeString().split(' ')[0]
         : "00:00:00",
+      endTime: new Date().toTimeString().split(' ')[0],
       duration: Math.max(1, Math.floor(elapsedSeconds / 60)),
       taskName: this.state.taskName,
       status: "incomplete",
@@ -251,6 +252,7 @@ export class TimerManager {
       startTime: this.state.startTime 
         ? this.state.startTime.toTimeString().split(' ')[0]
         : "00:00:00",
+      endTime: new Date().toTimeString().split(' ')[0],
       duration: Math.floor(this.state.totalSeconds / 60),
       taskName: this.state.taskName,
       status: "completed",

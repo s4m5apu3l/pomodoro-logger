@@ -13,6 +13,7 @@ export interface TimerState {
 export interface SessionData {
   date: string;          // YYYY-MM-DD
   startTime: string;     // HH:MM:SS
+  endTime: string;       // HH:MM:SS
   duration: number;      // in minutes
   taskName: string;
   status: 'completed' | 'incomplete';

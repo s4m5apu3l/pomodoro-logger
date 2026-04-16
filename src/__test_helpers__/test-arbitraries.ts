@@ -80,6 +80,16 @@ export const sessionDataArbitrary: fc.Arbitrary<SessionData> = fc.record({
 			([h, m, s]) =>
 				`${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`,
 		),
+	endTime: fc
+		.tuple(
+			fc.integer({ min: 0, max: 23 }),
+			fc.integer({ min: 0, max: 59 }),
+			fc.integer({ min: 0, max: 59 }),
+		)
+		.map(
+			([h, m, s]) =>
+				`${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`,
+		),
 	duration: fc.integer({ min: 1, max: 120 }),
 	taskName: fc
 		.string({ minLength: 1, maxLength: 100 })
@@ -199,6 +209,16 @@ export function sessionDataWithStatusArbitrary(
 			})
 			.map((d) => d.toISOString().split("T")[0]),
 		startTime: fc
+			.tuple(
+				fc.integer({ min: 0, max: 23 }),
+				fc.integer({ min: 0, max: 59 }),
+				fc.integer({ min: 0, max: 59 }),
+			)
+			.map(
+				([h, m, s]) =>
+					`${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`,
+			),
+		endTime: fc
 			.tuple(
 				fc.integer({ min: 0, max: 23 }),
 				fc.integer({ min: 0, max: 59 }),

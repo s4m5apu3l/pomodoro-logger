@@ -342,8 +342,6 @@
 }
 
 .pomodoro-sidebar .pmd-toggle {
-  appearance: none;
-  -webkit-appearance: none;
   width: 32px;
   height: 18px;
   border-radius: 100px;
@@ -353,7 +351,6 @@
   flex-shrink: 0;
   position: relative;
   transition: background var(--pmd-transition), border-color var(--pmd-transition);
-  vertical-align: middle;
 }
 
 .pomodoro-sidebar .pmd-toggle::after {
@@ -368,12 +365,12 @@
   transition: transform var(--pmd-transition), background var(--pmd-transition);
 }
 
-.pomodoro-sidebar .pmd-toggle:checked {
+.pomodoro-sidebar .pmd-toggle--on {
   background: color-mix(in srgb, var(--pmd-accent) 25%, transparent);
   border-color: color-mix(in srgb, var(--pmd-accent) 60%, transparent);
 }
 
-.pomodoro-sidebar .pmd-toggle:checked::after {
+.pomodoro-sidebar .pmd-toggle--on::after {
   transform: translateX(14px);
   background: var(--pmd-accent);
 }
@@ -383,6 +380,12 @@
   font-size: 12px;
   color: var(--pmd-muted);
   cursor: pointer;
+}
+
+/* ── TASK SECTION HIDE WHEN RUNNING ──────────── */
+
+.pmd-task-section--hidden {
+  display: none;
 }
 
 /* ── STATISTICS ──────────────────────────────── */

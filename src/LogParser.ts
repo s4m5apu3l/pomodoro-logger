@@ -4,20 +4,17 @@ export class LogParser {
   // Format header for Markdown table
   static formatHeader(): string {
     return [
-      "| Date       | Start Time | Duration | Task Name        | Status     |",
-      "| ---------- | ---------- | -------- | ---------------- | ---------- |",
+      "| Date       | Start Time | End Time   | Duration | Task Name        | Status     |",
+      "| ---------- | ---------- | ---------- | -------- | ---------------- | ---------- |",
     ].join("\n");
   }
 
-  // Format a session as a Markdown table row
   static formatSession(session: SessionData): string {
-    const { date, startTime, duration, taskName, status } = session;
+    const { date, startTime, endTime, duration, taskName, status } = session;
     
-    // Escape pipe characters in task name to avoid breaking table
     const escapedTaskName = taskName.replace(/\|/g, "\\|");
     
-    // Add padding around task name to match table format
-    return `| ${date} | ${startTime} | ${duration} | ${escapedTaskName} | ${status} |`;
+    return `| ${date} | ${startTime} | ${endTime} | ${duration} | ${escapedTaskName} | ${status} |`;
   }
 
   // Parse entire log file content
@@ -53,11 +50,11 @@ export class LogParser {
 
     const columns = this.extractColumns(row);
     
-    if (columns.length !== 5) {
+    if (columns.length !== 6) {
       return null;
     }
 
-    const [date, startTime, durationStr, taskName, status] = columns;
+    const [date, startTime, endTime, durationStr, taskName, status] = columns;
 
     // Validate date format (YYYY-MM-DD, allow extended years like +010000-01-01)
     if (!/^[+-]?\d{4,6}-\d{2}-\d{2}$/.test(date)) {
@@ -66,6 +63,10 @@ export class LogParser {
 
     // Validate time format (HH:MM:SS)
     if (!/^\d{2}:\d{2}:\d{2}$/.test(startTime)) {
+      return null;
+    }
+
+    if (!/^\d{2}:\d{2}:\d{2}$/.test(endTime)) {
       return null;
     }
 
@@ -83,6 +84,7 @@ export class LogParser {
     return {
       date,
       startTime,
+      endTime,
       duration,
       taskName,
       status: status as "completed" | "incomplete",
@@ -99,7 +101,7 @@ export class LogParser {
     // Must have at least 5 columns (6 pipes)
     const unescapedPipes = row.replace(/\\\|/g, '  ').match(/\|/g);
     const pipeCount = unescapedPipes ? unescapedPipes.length : 0;
-    if (pipeCount < 6) {
+    if (pipeCount < 7) {
       return false;
     }
 

@@ -13,6 +13,7 @@ export class SidebarView extends ItemView {
   private timerDisplay: HTMLElement | null = null;
   private timerTask: HTMLElement | null = null;
   private progressRing: SVGCircleElement | null = null;
+  private taskSection: HTMLElement | null = null;
   private taskNameInput: HTMLInputElement | null = null;
   private startButton: HTMLButtonElement | null = null;
   private pauseButton: HTMLButtonElement | null = null;
@@ -20,7 +21,8 @@ export class SidebarView extends ItemView {
   private stopButton: HTMLButtonElement | null = null;
   private workDurationInput: HTMLInputElement | null = null;
   private breakDurationInput: HTMLInputElement | null = null;
-  private soundEnabledCheckbox: HTMLInputElement | null = null;
+  private soundEnabledToggle: HTMLDivElement | null = null;
+  private soundEnabledState: boolean = true;
   private statisticsContainer: HTMLElement | null = null;
   private refreshStatsButton: HTMLButtonElement | null = null;
 
@@ -114,10 +116,10 @@ export class SidebarView extends ItemView {
   }
 
   private renderTaskSection(container: Element): void {
-    const section = container.createDiv({ cls: "pmd-section" });
-    section.createEl("label", { text: "What are you working on?", cls: "pmd-label" });
+    this.taskSection = container.createDiv({ cls: "pmd-section pmd-task-section" });
+    this.taskSection.createEl("label", { text: "What are you working on?", cls: "pmd-label" });
     
-    this.taskNameInput = section.createEl("input", {
+    this.taskNameInput = this.taskSection.createEl("input", {
       type: "text",
       placeholder: "Enter task name...",
       cls: "pmd-input",
@@ -239,18 +241,24 @@ export class SidebarView extends ItemView {
     this.breakDurationInput.addEventListener("change", () => this.handleSettingsChange());
     
     const soundGroup = section.createDiv({ cls: "pmd-toggle-row" });
-    this.soundEnabledCheckbox = soundGroup.createEl("input", {
-      type: "checkbox",
-      cls: "pmd-toggle",
-      attr: { id: "pmd-sound-toggle" },
-    }) as HTMLInputElement;
-    this.soundEnabledCheckbox.checked = this.plugin.settings.soundEnabled;
-    soundGroup.createEl("label", { 
+    this.soundEnabledToggle = soundGroup.createDiv({ cls: "pmd-toggle" }) as HTMLDivElement;
+    this.soundEnabledState = this.plugin.settings.soundEnabled;
+    if (this.soundEnabledState) {
+      this.soundEnabledToggle.classList.add("pmd-toggle--on");
+    }
+    const soundLabel = soundGroup.createEl("span", { 
       text: "sound notifications", 
       cls: "pmd-toggle-label",
-      attr: { for: "pmd-sound-toggle" },
     });
-    this.soundEnabledCheckbox.addEventListener("change", () => this.handleSettingsChange());
+    
+    const toggleHandler = () => {
+      if (!this.soundEnabledToggle) return;
+      this.soundEnabledState = !this.soundEnabledState;
+      this.soundEnabledToggle.classList.toggle("pmd-toggle--on", this.soundEnabledState);
+      this.handleSettingsChange();
+    };
+    this.soundEnabledToggle.addEventListener("click", toggleHandler);
+    soundLabel.addEventListener("click", toggleHandler);
   }
 
   private renderStatisticsSection(container: Element): void {
@@ -323,6 +331,12 @@ export class SidebarView extends ItemView {
     }
     
     this.setSettingsEnabled(!state.isRunning);
+    
+    if (state.isRunning) {
+      this.taskSection?.classList.add("pmd-task-section--hidden");
+    } else {
+      this.taskSection?.classList.remove("pmd-task-section--hidden");
+    }
     
     if (state.isRunning && !state.isPaused) {
       this.timerContainer?.classList.add('pmd-timer--running');
@@ -479,7 +493,7 @@ export class SidebarView extends ItemView {
   }
 
   private async handleSettingsChange(): Promise<void> {
-    if (!this.workDurationInput || !this.breakDurationInput || !this.soundEnabledCheckbox) return;
+    if (!this.workDurationInput || !this.breakDurationInput) return;
     
     try {
       const workDuration = parseInt(this.workDurationInput.value, 10);
@@ -499,7 +513,7 @@ export class SidebarView extends ItemView {
       
       this.plugin.settings.workDuration = workDuration;
       this.plugin.settings.breakDuration = breakDuration;
-      this.plugin.settings.soundEnabled = this.soundEnabledCheckbox.checked;
+      this.plugin.settings.soundEnabled = this.soundEnabledState;
       
       await this.plugin.saveSettings();
       
